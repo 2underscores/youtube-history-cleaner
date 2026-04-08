@@ -59,52 +59,24 @@ This prints a summary table: per-category and per-month breakdown of delete vs. 
 Use exactly these strings for `"category"`:
 
 **Keep (`delete: false`):**
-- `AI/Technology`
-- `Software/Programming`
-- `Software/Technology`
-- `Software/Security`
-- `Science/Academic`
-- `Science/Engineering`
-- `Science/Nature`
-- `Science/Math`
-- `Science/Health`
-- `Education/Academic`
-- `Education/Self-improvement`
-- `Economics/Business`
-- `Economics/Finance`
-- `Economics/Academic`
-- `News/Current Affairs`
+- `Technology - AI`
+- `Technology - Software`
+- `Technology - Other`
+- `Science - Engineering/Math`
+- `Science - Nature`
+- `Science - Economics/Finance`
+- `Science - Other`
 
 **Delete (`delete: true`):**
-- `Movie/TV Clip`
+- `News/Current Affairs`
 - `Gaming`
-- `Gaming/Tech History`
-- `Entertainment/Comedy`
-- `Entertainment/Shorts`
-- `Entertainment/Celebrity`
-- `Entertainment/Cars`
-- `Entertainment/Lifestyle`
-- `Entertainment/Music`
-- `Entertainment/Film`
-- `Sports`
+- `Entertainment - Movies/TV`
+- `Entertainment - Sports`
+- `Entertainment - Other`
 - `Food/Cooking`
 
 **Ambiguous — use judgment (`delete` depends on content):**
 - `Unknown` — delete if unclear
-
----
-
-## Keep vs. Delete Rules
-
-| Keep | Delete |
-|------|--------|
-| AI/ML papers, tools, frameworks | Movie/TV clips or recaps |
-| Software engineering content | Sports highlights or commentary |
-| Academic lectures or research | Gaming videos |
-| Economics, finance, business strategy | Celebrity gossip or lifestyle |
-| Science explainers | Comedy skits or entertainment |
-| Tech news and product reviews | Music videos |
-| Self-improvement (career/skills focused) | Cooking or food content |
 
 ---
 
