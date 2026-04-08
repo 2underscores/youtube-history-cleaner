@@ -10,8 +10,10 @@ import json
 import re
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 BASE_URL = "https://myactivity.google.com"
+OUTPUT_DIR = Path(__file__).parent / "scraped-data"
 BATCHEXECUTE_PATH = "/_/FootprintsMyactivityUi/data/batchexecute"
 RPC_ID = "y3VFHd"
 PAGE_SIZE = 100
@@ -199,6 +201,8 @@ def main():
 
     print(f"   bl={config['bl'][:40]}")
 
+    OUTPUT_DIR.mkdir(exist_ok=True)
+
     print("3. Fetching history pages...")
     videos = fetch_all_history(session, config)
 
@@ -218,9 +222,10 @@ def main():
         print(f"  {i:4}. [{date}] {v['title']}")
         print(f"         {v['url']}")
 
-    with open("history.json", "w") as f:
+    out_path = OUTPUT_DIR / "history.json"
+    with open(out_path, "w") as f:
         json.dump(unique, f, indent=2)
-    print(f"\nSaved {len(unique)} videos to history.json")
+    print(f"\nSaved {len(unique)} videos to {out_path}")
 
 
 if __name__ == "__main__":
