@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-youtube_history.py — Fetch your full YouTube watch history from myactivity.google.com
-Uses Chrome's saved session cookies (no password needed, just needs Chrome logged in).
+Fetch your full YouTube watch history from myactivity.google.com.
+Uses Chrome's saved session cookies (Chrome must be open and logged into Google).
 
 Usage:
-    pip install browser-cookie3 --break-system-packages
-    python3 youtube_history.py
+    uv run main.py
 
 Output:
     youtube_history.json — full list of watched videos with title, url, channel, timestamp
@@ -16,9 +15,15 @@ import re
 import hashlib
 import time
 import urllib.parse
-import urllib.request
 import browser_cookie3
+import requests
 from datetime import datetime, timezone
+
+UA = (
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/124.0.0.0 Safari/537.36'
+)
 
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────
@@ -38,31 +43,29 @@ def compute_sapisidhash(sapisid, origin='https://myactivity.google.com'):
     return f"SAPISIDHASH {ts}_{digest}"
 
 
-def cookie_header(cookies: dict) -> str:
-    return '; '.join(f'{k}={v}' for k, v in cookies.items())
+def make_session(cookies: dict) -> requests.Session:
+    s = requests.Session()
+    s.cookies.update(cookies)
+    s.headers.update({'User-Agent': UA})
+    return s
 
 
 # ── Session params from initial page ─────────────────────────────────────────
 
-def get_session_params(cookies: dict) -> dict:
+def get_session_params(session: requests.Session) -> dict:
     """
     Fetch the myactivity YouTube history page and extract the dynamic
     f.sid and bl (build label) values that must accompany every batchexecute call.
     """
-    url = 'https://myactivity.google.com/product/youtube'
-    req = urllib.request.Request(url, headers={
-        'User-Agent': (
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-            'AppleWebKit/537.36 (KHTML, like Gecko) '
-            'Chrome/124.0.0.0 Safari/537.36'
-        ),
-        'Cookie': cookie_header(cookies),
-    })
-    with urllib.request.urlopen(req) as resp:
-        html = resp.read().decode('utf-8')
+    resp = session.get('https://myactivity.google.com/product/youtube')
+    resp.raise_for_status()
+    html = resp.text
 
     fsid_m = re.search(r'"FdrFJe":"(-?\d+)"', html)
     bl_m   = re.search(r'"cfb2h":"([^"]+)"', html)
+
+    if not fsid_m or not bl_m:
+        raise RuntimeError("Could not find f.sid/bl in page — are you logged in to Google in Chrome?")
 
     return {'f.sid': fsid_m.group(1), 'bl': bl_m.group(1)}
 
@@ -75,7 +78,7 @@ BATCHEXECUTE_URL = (
 RPC_ID = 'y3VFHd'
 
 
-def fetch_page(cookies: dict, sapisidhash: str, session: dict,
+def fetch_page(http: requests.Session, sapisidhash: str, session_params: dict,
                page_token=None) -> str:
     """
     POST one batchexecute request for up to 100 history items.
@@ -96,38 +99,31 @@ def fetch_page(cookies: dict, sapisidhash: str, session: dict,
         f"&at={urllib.parse.quote(sapisidhash)}"
     )
 
-    params = urllib.parse.urlencode({
+    params = {
         'rpcids':        RPC_ID,
         'source-path':  '/product/youtube',
-        'f.sid':         session['f.sid'],
-        'bl':            session['bl'],
+        'f.sid':         session_params['f.sid'],
+        'bl':            session_params['bl'],
         'hl':            'en',
         'soc-app':       '712',
         'soc-platform':  '1',
         'soc-device':    '1',
         'rt':            'c',
-    })
+    }
 
-    req = urllib.request.Request(
-        f"{BATCHEXECUTE_URL}?{params}",
-        data=body.encode(),
-        method='POST',
+    resp = http.post(
+        BATCHEXECUTE_URL,
+        params=params,
+        data=body,
         headers={
             'Content-Type':  'application/x-www-form-urlencoded',
-            'User-Agent': (
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
-                'AppleWebKit/537.36 (KHTML, like Gecko) '
-                'Chrome/124.0.0.0 Safari/537.36'
-            ),
             'Origin':        'https://myactivity.google.com',
             'Referer':       'https://myactivity.google.com/product/youtube',
             'X-Same-Domain': '1',
-            'Cookie':        cookie_header(cookies),
         }
     )
-
-    with urllib.request.urlopen(req) as resp:
-        return resp.read().decode('utf-8')
+    resp.raise_for_status()
+    return resp.text
 
 
 # ── Response parser ───────────────────────────────────────────────────────────
@@ -223,11 +219,12 @@ def parse_response(raw: str):
 
 def main():
     cookies = get_chrome_cookies()
+    http = make_session(cookies)
 
     sapisid = cookies.get('SAPISID') or cookies['__Secure-3PAPISID']
     sapisidhash  = compute_sapisidhash(sapisid)
-    session      = get_session_params(cookies)
-    print(f"Session ready — bl: {session['bl']}")
+    session_params = get_session_params(http)
+    print(f"Session ready — bl: {session_params['bl']}")
 
     all_videos = []
     page_token = None
@@ -237,7 +234,7 @@ def main():
         page_num += 1
         print(f"Fetching page {page_num}…", end=' ', flush=True)
 
-        raw = fetch_page(cookies, sapisidhash, session, page_token)
+        raw = fetch_page(http, sapisidhash, session_params, page_token)
         items, next_token = parse_response(raw)
 
         print(f"{len(items)} videos")
