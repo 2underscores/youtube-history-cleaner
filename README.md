@@ -39,11 +39,9 @@ Paginates through all your YouTube watch history and saves it to `scraped-data/h
 
 ### Step 2 — Classify with Claude
 
-Open Claude Code in this directory and run:
+Open Claude Code in this directory and say:
 
-```
-/classify-youtube-history
-```
+> Classify my YouTube history
 
 This Claude Code skill will:
 - Split `history.json` into chunks of 50

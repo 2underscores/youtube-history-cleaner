@@ -10,7 +10,7 @@ Classify `scraped-data/history.json` into `scraped-data/history-classified.json`
 
 ## User Profile & Categories
 
-THIS IS CURRENTLY THE DEFAULT PROFILE. If this is still the default profile, let the user know they have not customised the user profile at all, give them the below profile and ask them if they would like to adjust it before continuing.
+THIS IS CURRENTLY THE DEFAULT PROFILE AND CATEGORIES. If this is still the default profile and categories, let the user know they have not customised the user profile or categories at all, give them the below profile and categories and ask them if they would like to adjust it before continuing.
 
 The user is an AI/SWE manager. Keep anything tech, AI, software, academic, economics, or science. Delete entertainment, gaming, sports, movie/TV clips, etc.
 
@@ -52,7 +52,9 @@ Read each `input/chunk_NN.json`, classify every item, write the result to `outpu
 - `"category"` — string from the category list above
 - `"delete"` — `true` to delete, `false` to keep
 
-**Always announce before starting each chunk and after finishing it.** Example:
+Do not reason or think about it too much. This is a simple, straightforward classification task and speed is more important than exactness. Just get input json, add and populate the category and delete fields on each item, and write output.
+
+Each chunk takes a while so warn the user of this at start and **always announce before starting each chunk and after finishing it.** Example:
 > Processing chunk 3/12...
 > Chunk 3 done. Moving to chunk 4.
 
