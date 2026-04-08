@@ -15,7 +15,7 @@ total = len(history)
 num_chunks = (total + CHUNK_SIZE - 1) // CHUNK_SIZE
 
 for i in range(num_chunks):
-    chunk = history[i * CHUNK_SIZE:(i + 1) * CHUNK_SIZE]
+    chunk = [{"video_id": item["video_id"], "title": item["title"]} for item in history[i * CHUNK_SIZE:(i + 1) * CHUNK_SIZE]]
     out_path = os.path.join(OUTPUT_DIR, f"chunk_{i+1:02d}.json")
     with open(out_path, "w") as f:
         json.dump(chunk, f, indent=2)
