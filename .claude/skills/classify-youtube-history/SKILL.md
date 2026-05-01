@@ -38,11 +38,36 @@ Use exactly these strings for `"category"`:
 
 ## Workflow
 
+### 0. Ask about time range
+
+**Before doing anything else**, ask the user:
+
+> **How far back would you like to classify your YouTube history?**
+> 1. Last 24 hours
+> 2. Last 7 days
+> 3. Last 30 days
+> 4. All time
+
+Wait for their answer. Then compute a UTC cutoff date from today's date (available in your context as `currentDate`):
+
+| Choice | Cutoff |
+|---|---|
+| Last 24 hours | today − 1 day, at `T00:00:00+00:00` |
+| Last 7 days | today − 7 days, at `T00:00:00+00:00` |
+| Last 30 days | today − 30 days, at `T00:00:00+00:00` |
+| All time | no cutoff |
+
+Tell the user how many videos fall in that window before proceeding — you can check by loading `scraped-data/history.json` and counting items with `watched_at >= cutoff`.
+
 ### 1. Split into chunks
 
-Chunks of 50 go into `scraped-data/tmp-work-dir/input/`. Use the existing `split_history.py` if present, or split manually:
+Chunks of 50 go into `scraped-data/tmp-work-dir/input/`. Pass `--since` with the cutoff date you computed above (omit it entirely for "all time"):
 
 ```bash
+# example for "last 7 days" if today is 2026-05-02
+uv run split_history.py --since 2026-04-25
+
+# example for "all time"
 uv run split_history.py
 ```
 
